@@ -15,7 +15,6 @@ import (
 )
 
 var file_id int
-var mutex sync.Mutex
 
 func thread(con *dns.Conn, rows *sql.Rows) {
 
@@ -152,6 +151,38 @@ func thread_dns_serve(con *dns.Conn, ch chan bool,r *regexp.Regexp, r_tel *regex
 	ch<-true
 }
 
+func db_mnp_check_thread(i int, ch chan bool, mutex *sync.Mutex,con *dns.Conn,db *sql.DB){
+	//dbQuery,err := db.Prepare("select * from (select em.*, rownum rn from FTP_ES_MSISDN em where sync_result=1) where rn > :1 AND rn < :2")
+	mutex.Lock()
+	dbQuery,err := db.Prepare("select * from (select em.msisdn, rownum rn from ES_MSISDN em WHERE ES_ID = 302) where rn > :1 AND rn < :2")
+	if err != nil {
+		fmt.Println("Error running query")
+		fmt.Println(err)
+		return
+	}
+	//defer dbQuery.Close()
+	rows, err := dbQuery.Query(i*10000, (i+1) * 10000)
+	if err != nil {
+		fmt.Println(".....Error processing query")
+		fmt.Println(err)
+		return
+	}
+	mutex.Unlock()
+	//defer rows.Close()
+	thread(con,rows)
+	err_p:=dbQuery.Close()
+	if err_p != nil {
+		log.Println("Can not finish prepare")
+		log.Println(err)
+	}
+	err =rows.Close()
+	if err != nil {
+		log.Println(err)
+		log.Println("Can not finish qwery")
+	}
+
+}
+
 func main(){
 
 	// create log file
@@ -203,32 +234,14 @@ func main(){
 		server_dns_ch := make(chan bool)
 		go thread_dns_serve(con, server_dns_ch,r,r_tel, db, 10000)
 		i:=0
+		ch := make(chan bool)
+		var mutex sync.Mutex
 		for (i+1)*10000 < cnt {
-			//dbQuery,err := db.Prepare("select * from (select em.*, rownum rn from FTP_ES_MSISDN em where sync_result=1) where rn > :1 AND rn < :2")
-			dbQuery,err := db.Prepare("select * from (select em.msisdn, rownum rn from ES_MSISDN em WHERE ES_ID = 302) where rn > :1 AND rn < :2")
-			if err != nil {
-				fmt.Println("Error running query")
-				fmt.Println(err)
-				return
+			for i := 1; i < 3; i++{
+				go db_mnp_check_thread(i, ch, &mutex, con, db)
 			}
-			//defer dbQuery.Close()
-			rows, err := dbQuery.Query(i*10000, (i+1) * 10000)
-			if err != nil {
-				fmt.Println(".....Error processing query")
-				fmt.Println(err)
-				return
-			}
-			//defer rows.Close()
-			thread(con,rows)
-			err_p:=dbQuery.Close()
-			if err_p != nil {
-				log.Println("Can not finish prepare")
-				log.Println(err)
-			}
-			err =rows.Close()
-			if err != nil {
-				log.Println(err)
-				log.Println("Can not finish qwery")
+			for i := 1; i < 3; i++{
+				<-ch
 			}
 			i++
 		}
