@@ -2,10 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"fmt"
 	_ "github.com/godror/godror"
 	"github.com/miekg/dns"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -132,10 +132,11 @@ func thread_dns_serve(con *dns.Conn, ch chan bool,r *regexp.Regexp, r_tel *regex
 		all_resv++
 		con.SetReadDeadline(time.Now().Add(time.Second * timeout))
 	}
-	resv_int = resv_int-1
+	//resv_int = resv_int-1
+	fmt.Println(resv_int, resv_j , cnt)
+	pars_answers(insert_buf[resv_j*step : resv_int],r, r_tel, db)
 	log.Println("Numbers recieve msisdn : ",resv_int)
 	log.Println("Numbers all msisdn that should check : ", cnt)
-	pars_answers(insert_buf[resv_j*step : resv_int],r, r_tel, db)
 	if all_resv == int32(resv_int +1) {
 		log.Println("All package recieve")
 	} 	else{
@@ -187,23 +188,23 @@ func init() {
 
 	for i := 0; i < len(configLines); i++ {
 		if strings.Contains(configLines[i], "log-path"){
-			newstr :=strings.ReplaceAll(configLines[i], " ", "")
+			newstr :=strings.Replace(configLines[i], " ", "", -1)
 			a:=strings.Split(newstr,"=")
 			today := time.Now()
-			config.logPath = a[1]+today.Format("2006.01.02")+".log"
+			config.logPath = a[1]+"/"+today.Format("2006.01.02")+".log"
 		}
 		if strings.Contains(configLines[i], "base"){
-			newstr :=strings.ReplaceAll(configLines[i], " ", "")
+			newstr :=strings.Replace(configLines[i], " ", "", -1)
 			a:=strings.Split(newstr,"=")
 			config.db = a[1]
 		}
 		if strings.Contains(configLines[i], "user"){
-			newstr :=strings.ReplaceAll(configLines[i], " ", "")
+			newstr :=strings.Replace(configLines[i], " ", "", -1)
 			a:=strings.Split(newstr,"=")
 			config.usr = a[1]
 		}
 		if strings.Contains(configLines[i], "pswd"){
-			newstr :=strings.ReplaceAll(configLines[i], " ", "")
+			newstr :=strings.Replace(configLines[i], " ", "", -1)
 			a:=strings.Split(newstr,"=")
 			config.pswd = a[1]
 		}
@@ -220,7 +221,7 @@ func main(){
 		log.Fatalf("error opening file: %v", err)
 	}
 	defer f.Close()
-	
+
 	log.SetOutput(f)
 	
 	// create db oracle connection
@@ -235,7 +236,7 @@ func main(){
 
 	// try to know dns server ip
 	//##########################################################################################################
-	dns_server_ip ,err := db.Query("select code from SETTINGS where code='mnp_dns_server'")
+	dns_server_ip ,err := db.Query("select val from SETTINGS where code='mnp_dns_server' and rownum =1")
 	//cnt_row,err := db.Query("select COUNT(*) from ES_MSISDN WHERE ES_ID = 302")
 	if err != nil {
 		fmt.Println("Error running query")
@@ -244,9 +245,9 @@ func main(){
 	}
 	defer dns_server_ip.Close()
 	dns_server_ip.Next()
-	dns_server_ip.Scan(config.dns_server_ip)
-	
-	// cnt for array
+	dns_server_ip.Scan(&config.dns_server_ip)
+	log.Println(config.dns_server_ip)
+	// count all numbers
 	//##########################################################################################################
 	var cnt int
 	cnt_row,err := db.Query("select COUNT(*) from FTP_ES_MSISDN WHERE sync_result = 1")
@@ -274,7 +275,7 @@ func main(){
 		//##########################################################################################################
 		log.Println("Start long work rows in db : ",cnt)
 		server_dns_ch := make(chan bool)
-		go thread_dns_serve(con, server_dns_ch,r,r_tel, db, 100,10)
+		go thread_dns_serve(con, server_dns_ch,r,r_tel, db, 100000,10)
 		i:=0
 		ch := make(chan bool)
 		var mutex sync.Mutex
