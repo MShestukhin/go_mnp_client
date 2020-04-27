@@ -38,6 +38,7 @@ func newWorker(config Config, err_mnp_check func(err error)) *Worker {
 	//##########################################################################################################
 	cnt := db.get_cnt()
 	w.server.con = con
+	w.server.w = w
 	w.client.con = con
 	w.cnt = cnt
 	return w
@@ -54,7 +55,7 @@ func (w * Worker) process() {
 	}
 }
 
-func (w * Worker) db_mnp_check_thread(i int, ch chan bool, mutex *sync.Mutex){
+func (w * Worker) db_mnp_check_thread(i int, ch chan bool, mutex *sync.Mutex) {
 	mutex.Lock()
 	rows := w.db.chank_qwery(i*100000,(i+1) * 100000)
 	defer mutex.Unlock()

@@ -62,7 +62,7 @@ func (dbase *DB_client) chank_qwery(first int, end int) *sql.Rows{
 }
 
 func newDB(cgf Config) (*DB_client, error) {
-	db, err := sql.Open("godror", "oracle://" + cgf.usr + ":" +cgf.pswd +"@"+"192.168.97.41:1521/sk")
+	db, err := sql.Open("godror", "oracle://" + cgf.usr + ":" +cgf.pswd +"@"+cgf.db	)
 	if err != nil {
 		log.Println(err)
 		return nil, err
