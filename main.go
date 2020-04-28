@@ -26,7 +26,6 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//config :=new(Config)
 	configLines := strings.Split(string(configFile), "\n")
 
 	for i := 0; i < len(configLines); i++ {
@@ -56,28 +55,27 @@ func init() {
 
 var err_handler func(err error)
 
-func main(){
+func main() {
 
-	// create log file
+	//create log file
 	//##########################################################################################################
-
-	//f, err := os.OpenFile(config.logPath, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-	//if err != nil {
-	//	log.Fatalf("error opening file: %v", err)
-	//	return
-	//}
-	//defer f.Close()
-	//log.SetOutput(f)
-
+	f, err := os.OpenFile(config.logPath, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+		return
+	}
+	defer f.Close()
+	log.SetOutput(f)
+	var mnp_client *Worker
 	err_mnp_check := func(err error) {
 		if err != nil {
 			log.Println(err)
+			mnp_client.disconnect()
 			os.Exit(1)
 		}
 	}
 	err_handler = err_mnp_check
-
-	mnp_client := newWorker(config,err_mnp_check)
+	mnp_client = newWorker(config,err_mnp_check)
 	mnp_client.process()
 
 }

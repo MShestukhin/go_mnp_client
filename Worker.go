@@ -19,13 +19,13 @@ func newWorker(config Config, err_mnp_check func(err error)) *Worker {
 	w := new(Worker)
 	// create db oracle connection
 	//##########################################################################################################
-	db, err:= newDB(config)
+	db, err:= newDB(&config)
 	err_mnp_check(err)
 	w.db = db
 
 	// try to know dns server ip and connect to
 	//##########################################################################################################
-	config.dns_server_ip = db.get_dns_ip()
+	config.dns_server_ip = w.db.get_dns_ip()
 
 	conn, err := net.Dial("udp", config.dns_server_ip+":53")
 	err_mnp_check(err)
@@ -42,6 +42,11 @@ func newWorker(config Config, err_mnp_check func(err error)) *Worker {
 	w.client.con = con
 	w.cnt = cnt
 	return w
+}
+
+func (w * Worker) disconnect() {
+	w.db.db.Close()
+	w.server.con.Close()
 }
 
 func (w * Worker) process() {
@@ -80,14 +85,14 @@ func (w * Worker) long_road_process() {
 }
 
 func (w *Worker)pars_answers(push_insert_buf []dns.Msg) {
-	log.Println("1000 rows")
+	log.Println("4000 rows")
 	iter :=0
 	r, _ := regexp.Compile("rn=d([0-9]{2})([0-9]{2})?")
 	r_tel, _ := regexp.Compile("tel:[+](.[0-9]+)?")
-	file_id_buf := make([]int, 1000)
-	msisdn_err_buf := make([]string, 1000)
-	cod_err_buf := make([]int, 1000)
-	cod_str_err_buf := make([]string, 1000)
+	file_id_buf := make([]int, 4000)
+	msisdn_err_buf := make([]string, 4000)
+	cod_err_buf := make([]int, 4000)
+	cod_str_err_buf := make([]string, 4000)
 	log.Println("Non-Validated MSISDN")
 	for _, msg := range push_insert_buf {
 		if msg.Rcode != 0 {
