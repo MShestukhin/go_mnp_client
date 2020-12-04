@@ -35,7 +35,6 @@ func (client *Client) sendAll (rows *sql.Rows, rn int) {
 
 	//start sort through msisdn from db and send to server
 	//##########################################################################################################
-	//mutex.Lock()
 	for rows.Next() {
 		if rn != 0 {
 			rows.Scan(&file_id,&msisdn,&rn)
@@ -55,5 +54,4 @@ func (client *Client) sendAll (rows *sql.Rows, rn int) {
 		client.con.WriteMsg(m)
 	}
 	log.Println("Send")
-	//mutex.Unlock()
 }
