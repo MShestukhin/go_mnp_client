@@ -38,6 +38,7 @@ func newWorker(config Config, err_mnp_check func(err error)) *Worker {
 	//##########################################################################################################
 	cnt := db.get_cnt()
 	w.server.con = con
+	w.server.w = w
 	w.client.con = con
 	w.cnt = cnt
 	return w

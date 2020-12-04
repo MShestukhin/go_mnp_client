@@ -11,7 +11,7 @@ type DB_client struct {
 }
 
 func (dbase *DB_client) qwery(qwrt string) (*sql.Rows, int){
-	rows,err := dbase.db.Query("select file_id, msisdn from FTP_ES_MSISDN WHERE sync_result = 1")
+	rows,err := dbase.db.Query(qwrt)
 	err_handler(err)
 	defer rows.Close()
 	return rows, 0
@@ -62,7 +62,7 @@ func (dbase *DB_client) chank_qwery(first int, end int) *sql.Rows{
 }
 
 func newDB(cgf Config) (*DB_client, error) {
-	db, err := sql.Open("godror", "oracle://" + cgf.usr + ":" +cgf.pswd +"@"+"192.168.97.41:1521/sk")
+	db, err := sql.Open("godror", "oracle://" + cgf.usr + ":" +cgf.pswd +"@192.168.97.41:1521/sk")
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -70,5 +70,9 @@ func newDB(cgf Config) (*DB_client, error) {
 	defer db.Close()
 	dbc := new(DB_client)
 	dbc.db = db
+	cnt :=0
+	cnt_qwery, _ := dbc.qwery("select COUNT(*) from FTP_ES_MSISDN WHERE sync_result = 1")
+	cnt_qwery.Next()
+	cnt_qwery.Scan(&cnt)
 	return dbc, nil
 }
