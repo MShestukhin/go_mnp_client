@@ -50,14 +50,14 @@ func (w * Worker) disconnect() {
 }
 
 func (w * Worker) process() {
-	if w.cnt >100000 {
-		w.server.start(w.cnt,5)
-		w.long_road_process()
-	} else {
+	//if w.cnt >100000 {
+	//	w.server.start(w.cnt,5)
+	//	w.long_road_process()
+	//} else {
 		rows := w.db.get_msisdns()
 		w.server.start(w.cnt,2)
 		w.client.sendAll(rows,0)
-	}
+	//}
 }
 
 func (w * Worker) db_mnp_check_thread(i int, ch chan bool, mutex *sync.Mutex) {
