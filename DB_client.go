@@ -10,7 +10,7 @@ type DB_client struct {
 	db * sql.DB
 }
 
-func (dbase *DB_client) qwery(qwrt string) (*sql.Rows, int) {
+func (dbase *DB_client) qwery(qwrt string) (*sql.Rows, int){
 	rows,err := dbase.db.Query(qwrt)
 	err_handler(err)
 	defer rows.Close()
@@ -67,5 +67,9 @@ func newDB(cgf *Config) (*DB_client, error) {
 		return nil, err
 	}
 	dbc.db = db
+	cnt :=0
+	cnt_qwery, _ := dbc.qwery("select COUNT(*) from FTP_ES_MSISDN WHERE sync_result = 1")
+	cnt_qwery.Next()
+	cnt_qwery.Scan(&cnt)
 	return dbc, nil
 }
